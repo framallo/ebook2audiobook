@@ -3677,11 +3677,18 @@ def convert_ebook(args:dict)->tuple:
                 if audio_pre_final_exist or audio_sentences_exist:
                     msg = f"Warning! This conversion already exists. Continue? WARNING! The whole previous conversion will be deleted!" if audio_pre_final_exist else f"Warning! Some sentences are already converted. Resume?"
                     print(msg)
-                    while True:
-                        choice = input("[s]kip / [y]es: ").strip().lower()
-                        if choice in ('s', 'y'):
-                            break
-                        print("Please enter 's', or 'y'.")
+                    if not sys.stdin.isatty():
+                        # Headless / non-interactive (no tty): never block on input().
+                        # Default to [y]es so a re-run resumes instead of crashing
+                        # with EOFError. This is what makes session resume work.
+                        choice = 'y'
+                        print("[headless] no tty; auto-selecting [y]es (resume)")
+                    else:
+                        while True:
+                            choice = input("[s]kip / [y]es: ").strip().lower()
+                            if choice in ('s', 'y'):
+                                break
+                            print("Please enter 's', or 'y'.")
                     if choice == 'y':
                         if audio_pre_final_exist:
                             delete_folder(session['process_dir'])
